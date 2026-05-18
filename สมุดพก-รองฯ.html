@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+  <title>สมุดพก รองชัยยะ | ศอ.10</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans+Thai:wght@300;400;500;600&display=swap"/>
+  <style>
+    :root {
+      --green:#16a34a; --green-lt:#f0fdf4; --green-mid:#dcfce7;
+      --yellow:#d97706; --yellow-lt:#fffbeb; --yellow-mid:#fef3c7;
+      --red:#dc2626; --red-lt:#fef2f2; --red-mid:#fee2e2;
+      --ink:#0f172a; --ink2:#334155; --ink3:#64748b; --ink4:#94a3b8;
+      --bg:#f1f5f9; --card:#ffffff; --line:#e2e8f0; --line2:#f8fafc;
+      --teal:#0f766e; --teal-dark:#065f46; --teal-lt:#f0fdfa;
+      --p1:#0f766e; --p2:#1d4ed8; --p3:#9a3412; --p4:#6d28d9;
+      --r:14px; --r-sm:9px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html{scroll-behavior:smooth;height:100%;}
+    body{font-family:"Prompt","IBM Plex Sans Thai",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100%;display:flex;flex-direction:column;}
+
+    /* ═══ HEADER ═══════════════════════════════════════════════════════ */
+    .hdr{
+      background:linear-gradient(160deg,#0f766e 0%,#064e3b 100%);
+      color:#fff;padding:14px 20px 16px;position:sticky;top:0;z-index:50;
+      box-shadow:0 4px 16px rgba(0,0,0,.25);flex-shrink:0;
+    }
+    .hdr-row1{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+    .hdr-icon{width:38px;height:38px;background:rgba(255,255,255,.15);border-radius:10px;display:grid;place-items:center;font-size:21px;flex-shrink:0;}
+    .hdr-info{flex:1;}
+    .hdr-title{font-size:15.5px;font-weight:700;line-height:1.15;}
+    .hdr-sub{font-size:11px;opacity:.7;margin-top:1px;}
+    .hdr-date{font-size:10.5px;opacity:.65;text-align:right;line-height:1.4;}
+
+    .traffic{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+    .tpill{border-radius:10px;padding:9px 8px;text-align:center;cursor:default;}
+    .tpill.g{background:rgba(34,197,94,.2);border:1.5px solid rgba(34,197,94,.35);}
+    .tpill.y{background:rgba(234,179,8,.2);border:1.5px solid rgba(234,179,8,.35);}
+    .tpill.r{background:rgba(248,113,113,.2);border:1.5px solid rgba(248,113,113,.35);}
+    .tpill-n{font-size:28px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;}
+    .tpill-l{font-size:10px;opacity:.8;margin-top:2px;font-weight:500;}
+
+    /* ═══ BODY ══════════════════════════════════════════════════════════ */
+    .page{flex:1;padding:14px 16px 28px;max-width:480px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:12px;}
+
+    /* ═══ QUICK CARDS ═══════════════════════════════════════════════════ */
+    .qrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .qcard{background:var(--card);border-radius:var(--r);border:1px solid var(--line);padding:14px 16px;display:flex;flex-direction:column;gap:0;}
+    .q-lbl{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);margin-bottom:4px;}
+    .q-val{font-size:34px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.02em;}
+    .q-unit{font-size:11px;color:var(--ink3);margin-top:2px;}
+    .q-badge{margin-top:8px;display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+    .q-badge.g{background:var(--green-lt);color:var(--green);}
+    .q-badge.y{background:var(--yellow-lt);color:var(--yellow);}
+    .q-badge.r{background:var(--red-lt);color:var(--red);}
+
+    /* ═══ TAB STRIP ═════════════════════════════════════════════════════ */
+    .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+    .tab{
+      background:var(--card);border:1.5px solid var(--line);border-radius:10px;
+      padding:10px 6px;text-align:center;cursor:pointer;
+      transition:all .18s;user-select:none;
+    }
+    .tab-code{font-size:12px;font-weight:700;letter-spacing:.05em;}
+    .tab-dots{font-size:13px;margin-top:3px;line-height:1;}
+    .tab.active{border-color:transparent;box-shadow:0 2px 12px rgba(0,0,0,.12);}
+    .tab[data-p="p1"].active{background:var(--p1);color:#fff;}
+    .tab[data-p="p2"].active{background:var(--p2);color:#fff;}
+    .tab[data-p="p3"].active{background:var(--p3);color:#fff;}
+    .tab[data-p="p4"].active{background:var(--p4);color:#fff;}
+
+    /* ═══ PILLAR PANEL ══════════════════════════════════════════════════ */
+    .panel{display:none;flex-direction:column;gap:10px;}
+    .panel.active{display:flex;}
+
+    /* ── Pillar hero card ── */
+    .hero{background:var(--card);border-radius:var(--r);border:1px solid var(--line);padding:20px;display:flex;align-items:center;gap:20px;}
+    .hero-ring{flex-shrink:0;}
+    .hero-info{flex:1;}
+    .hero-name{font-size:16px;font-weight:700;line-height:1.3;}
+    .hero-en{font-size:11px;color:var(--ink3);margin-top:2px;}
+    .hero-stats{display:flex;gap:16px;margin-top:10px;}
+    .hs{display:flex;flex-direction:column;}
+    .hs-n{font-size:22px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;}
+    .hs-l{font-size:10px;color:var(--ink3);margin-top:1px;font-weight:500;}
+
+    /* SVG ring */
+    .ring-wrap{position:relative;width:88px;height:88px;}
+    .ring-bg{stroke:var(--line);fill:none;}
+    .ring-fill{fill:none;stroke-linecap:round;transition:stroke-dasharray .8s ease;}
+    .ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+    .ring-pct{font-size:20px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;}
+    .ring-sub{font-size:9px;color:var(--ink3);margin-top:1px;font-weight:600;letter-spacing:.04em;}
+
+    /* ── KPI list ── */
+    .klist{background:var(--card);border-radius:var(--r);border:1px solid var(--line);overflow:hidden;}
+    .kitem{padding:14px 16px;border-bottom:1px solid var(--line2);display:flex;flex-direction:column;gap:9px;}
+    .kitem:last-child{border-bottom:0;}
+
+    .kitem-top{display:flex;align-items:flex-start;gap:8px;}
+    .kcode{font-size:9.5px;font-family:monospace;font-weight:700;color:var(--ink3);background:var(--bg);padding:2px 6px;border-radius:4px;flex-shrink:0;margin-top:2px;}
+    .kname{font-size:13px;font-weight:500;flex:1;line-height:1.4;color:var(--ink2);}
+    .kdot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+    .kdot.g{background:var(--green);}
+    .kdot.y{background:var(--yellow);}
+    .kdot.r{background:var(--red);}
+
+    .kitem-mid{display:flex;align-items:baseline;gap:6px;}
+    .kval{font-size:34px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.02em;}
+    .kval.g{color:var(--green);}
+    .kval.y{color:var(--yellow);}
+    .kval.r{color:var(--red);}
+    .kunit{font-size:13px;color:var(--ink3);font-weight:500;}
+    .ktarget{margin-left:auto;font-size:12px;color:var(--ink3);white-space:nowrap;align-self:flex-end;padding-bottom:3px;}
+
+    .kbar{height:7px;background:var(--bg);border-radius:4px;overflow:hidden;}
+    .kbar-fill{height:100%;border-radius:4px;}
+    .kbar-fill.g{background:var(--green);}
+    .kbar-fill.y{background:var(--yellow);}
+    .kbar-fill.r{background:var(--red);}
+
+    /* ═══ FOOTER ════════════════════════════════════════════════════════ */
+    .foot{text-align:center;font-size:10.5px;color:var(--ink4);padding:4px 0 8px;}
+
+    /* ═══ PRINT ══════════════════════════════════════════════════════════ */
+    @media print{
+      .hdr{position:relative;}
+      .tabs{display:none;}
+      .panel{display:flex!important;}
+    }
+    @media(max-width:340px){
+      .kval{font-size:28px;}
+      .tpill-n{font-size:24px;}
+    }
+  </style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-row1">
+    <div class="hdr-icon">🏥</div>
+    <div class="hdr-info">
+      <div class="hdr-title">สมุดพก รองชัยยะ</div>
+      <div class="hdr-sub">ศูนย์อนามัยที่ 10 · ปีงบ 2568</div>
+    </div>
+    <div class="hdr-date" id="hdr-date"></div>
+  </div>
+  <div class="traffic">
+    <div class="tpill g"><div class="tpill-n" id="cnt-g">—</div><div class="tpill-l">🟢 บรรลุเป้า</div></div>
+    <div class="tpill y"><div class="tpill-n" id="cnt-y">—</div><div class="tpill-l">🟡 เฝ้าระวัง</div></div>
+    <div class="tpill r"><div class="tpill-n" id="cnt-r">—</div><div class="tpill-l">🔴 ต้องเร่ง</div></div>
+  </div>
+</header>
+
+<div class="page">
+
+  <!-- Quick Alert Cards -->
+  <div class="qrow">
+    <div class="qcard">
+      <div class="q-lbl">ฝุ่น PM 2.5</div>
+      <div class="q-val" style="color:var(--yellow)">42</div>
+      <div class="q-unit">µg/m³ · เขต 10 เฉลี่ย</div>
+      <div class="q-badge y">⚠ เกินมาตรฐาน</div>
+    </div>
+    <div class="qcard">
+      <div class="q-lbl">เบิกจ่ายงบ 2568</div>
+      <div class="q-val" style="color:var(--green)">64.2</div>
+      <div class="q-unit">% · เงินบำรุง</div>
+      <div class="q-badge g">▲ เกินเป้า Q2</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs" id="tabs"></div>
+
+  <!-- Panels (generated by JS) -->
+  <div id="panels"></div>
+
+  <div class="foot">แหล่งข้อมูล: HDC · MOPH Open Data · รายงานกลุ่มยุทธศาสตร์ฯ ศอ.10<br/>อัปเดต: <span id="upd"></span></div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// DATA
+// ─────────────────────────────────────────────────────────────────────────────
+const PILLARS = [
+  { id:"p1", code:"P1", name:"ส่งเสริม ป้องกัน คุ้มครอง", en:"PP&P Excellence",      color:"#0f766e" },
+  { id:"p2", code:"P2", name:"บริการเป็นเลิศ",            en:"Service Excellence",    color:"#1d4ed8" },
+  { id:"p3", code:"P3", name:"บุคลากรเป็นเลิศ",           en:"People Excellence",     color:"#9a3412" },
+  { id:"p4", code:"P4", name:"บริหารเป็นเลิศ",            en:"Governance Excellence", color:"#6d28d9" },
+];
+
+// v=ผลงาน  t=เป้า  unit=หน่วย  inv=ยิ่งน้อยยิ่งดี
+const RAW = [
+  // ── P1 ──────────────────────────────────────────────────────────────
+  {code:"NCD-01",p:"p1",name:"คัดกรองเบาหวาน (DM) กลุ่มเสี่ยง อายุ 35 ปีขึ้นไป",     v:78.4, t:80,  unit:"%"},
+  {code:"NCD-02",p:"p1",name:"คัดกรองความดันโลหิตสูง (HT) กลุ่มเสี่ยง",              v:82.1, t:80,  unit:"%"},
+  {code:"MCH-01",p:"p1",name:"ฝากครรภ์ครั้งแรก ก่อน 12 สัปดาห์",                    v:71.3, t:75,  unit:"%"},
+  {code:"MCH-02",p:"p1",name:"อัตราคลอดวัยรุ่น 15–19 ปี",                           v:38.5, t:50,  unit:"/พันการเกิด", inv:true},
+  {code:"CHD-01",p:"p1",name:"เด็ก 0–5 ปี ส่วนสูงตามเกณฑ์",                        v:69.8, t:72,  unit:"%"},
+  {code:"CHD-02",p:"p1",name:"เด็กแรกเกิด น้ำหนัก < 2,500 กรัม",                   v:6.4,  t:7,   unit:"%", inv:true},
+  {code:"CHD-03",p:"p1",name:"เด็กปฐมวัย พัฒนาการสมวัย",                           v:85.2, t:85,  unit:"%"},
+  {code:"ELD-01",p:"p1",name:"ผู้สูงอายุ ADL ≥ 12 คะแนน (ช่วยเหลือตัวเองได้)",     v:88.6, t:80,  unit:"%"},
+  {code:"ELD-02",p:"p1",name:"ผู้สูงอายุได้รับดูแลระยะยาว (LTC) ตามแผน",           v:73.4, t:80,  unit:"%"},
+  {code:"MH-01", p:"p1",name:"ผู้ป่วยซึมเศร้าเข้าถึงบริการ",                        v:76.2, t:85,  unit:"%"},
+  {code:"DEN-01",p:"p1",name:"อัตราป่วยไข้เลือดออก (DHF)",                         v:62.4, t:100, unit:"/แสนประชากร", inv:true},
+  {code:"TB-01", p:"p1",name:"อัตราความสำเร็จการรักษาวัณโรค",                       v:87.3, t:88,  unit:"%"},
+  {code:"PM25",  p:"p1",name:"จำนวนวันฝุ่น PM 2.5 เกินมาตรฐาน (AQI > 100)",        v:42,   t:30,  unit:"วัน", inv:true},
+
+  // ── P2 ──────────────────────────────────────────────────────────────
+  {code:"NCD-03",p:"p2",name:"ผู้ป่วยเบาหวานควบคุมระดับน้ำตาลได้ดี",               v:37.8, t:40,  unit:"%"},
+  {code:"NCD-04",p:"p2",name:"ผู้ป่วยความดันโลหิตสูงควบคุมได้ดี",                  v:58.3, t:60,  unit:"%"},
+  {code:"SVC-01",p:"p2",name:"ความพึงพอใจผู้รับบริการ (OPD)",                      v:83.5, t:80,  unit:"%"},
+  {code:"SVC-02",p:"p2",name:"อัตราส่งต่อผู้ป่วยออกนอกเขต",                        v:4.2,  t:5,   unit:"%", inv:true},
+  {code:"SVC-03",p:"p2",name:"โรงพยาบาล Smart Hospital ≥ Level 3",                 v:62.5, t:80,  unit:"%"},
+  {code:"SVC-04",p:"p2",name:"ER Response Time ≤ 10 นาที",                        v:82.1, t:80,  unit:"%"},
+  {code:"SVC-05",p:"p2",name:"อัตราการติดเชื้อในโรงพยาบาล (HAI)",                  v:1.8,  t:2,   unit:"%", inv:true},
+  {code:"SVC-06",p:"p2",name:"Stroke Fast Track ผ่านเกณฑ์",                       v:74.3, t:80,  unit:"%"},
+  {code:"SVC-07",p:"p2",name:"ผ่าตัดได้ตามนัด (Elective Surgery)",                 v:88.4, t:85,  unit:"%"},
+  {code:"SVC-08",p:"p2",name:"การใช้บริการ Telemedicine",                          v:1240, t:1500,unit:"ราย/เดือน"},
+
+  // ── P3 ──────────────────────────────────────────────────────────────
+  {code:"PPL-01",p:"p3",name:"บุคลากรได้รับการพัฒนา ≥ 20 ชั่วโมง/ปี",             v:77.4, t:80,  unit:"%"},
+  {code:"PPL-02",p:"p3",name:"อัตราการลาออกของบุคลากร",                            v:3.2,  t:5,   unit:"%", inv:true},
+  {code:"PPL-03",p:"p3",name:"ความพึงพอใจบุคลากรในองค์กร",                        v:82.3, t:80,  unit:"%"},
+  {code:"PPL-04",p:"p3",name:"บุคลากรผ่านประเมินสมรรถนะตามมาตรฐาน",               v:91.5, t:90,  unit:"%"},
+  {code:"PPL-05",p:"p3",name:"แพทย์และพยาบาลครบตามเกณฑ์กระทรวง",                  v:74.2, t:80,  unit:"%"},
+
+  // ── P4 ──────────────────────────────────────────────────────────────
+  {code:"GOV-01",p:"p4",name:"การเบิกจ่ายงบประมาณเงินบำรุง ปี 2568",              v:64.2, t:80,  unit:"%"},
+  {code:"GOV-02",p:"p4",name:"ITA — ดัชนีความโปร่งใสองค์กร",                      v:88.4, t:85,  unit:"คะแนน"},
+  {code:"GOV-03",p:"p4",name:"ส่งรายงานตรงเวลาตาม KPI กรม",                       v:92.3, t:90,  unit:"%"},
+  {code:"GOV-04",p:"p4",name:"หน่วยงานไม่มีข้อสังเกต สตง.",                        v:76.9, t:90,  unit:"%"},
+  {code:"GOV-05",p:"p4",name:"จำนวนเรื่องร้องเรียน (ลดจากปีก่อน)",                v:3,    t:5,   unit:"เรื่อง", inv:true},
+  {code:"GOV-06",p:"p4",name:"Digital Maturity Score (กรมประเมิน)",                v:3.2,  t:4,   unit:"คะแนน"},
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+const cls = (v,t,inv) => {
+  const r = inv ? t/Math.max(v,0.0001) : v/t;
+  return r >= 0.95 ? "g" : r >= 0.75 ? "y" : "r";
+};
+const barW = (v,t,inv) => {
+  const r = inv ? t/Math.max(v,0.0001) : v/t;
+  return Math.min(100, r*100).toFixed(1);
+};
+const fmt = n => Number.isInteger(n) ? n : n.toFixed(1);
+
+// Circular SVG ring
+function ringSVG(pct, color, size=88){
+  const r = (size-12)/2, cx=size/2, cy=size/2;
+  const circ = 2*Math.PI*r;
+  const fill = (pct/100)*circ;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <circle class="ring-bg" cx="${cx}" cy="${cy}" r="${r}" stroke-width="8"/>
+    <circle class="ring-fill" cx="${cx}" cy="${cy}" r="${r}" stroke-width="8"
+      stroke="${color}" stroke-dasharray="${fill.toFixed(1)} ${circ.toFixed(1)}"
+      transform="rotate(-90 ${cx} ${cy})"/>
+  </svg>`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DATE
+// ─────────────────────────────────────────────────────────────────────────────
+const now = new Date();
+const thFull = now.toLocaleDateString("th-TH",{year:"numeric",month:"long",day:"numeric"});
+const thShort = now.toLocaleDateString("th-TH",{day:"numeric",month:"short"});
+document.getElementById("hdr-date").innerHTML = thShort.replace(" ","\n");
+document.getElementById("upd").textContent = thFull;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BUILD
+// ─────────────────────────────────────────────────────────────────────────────
+const kpis = RAW.map(k=>({...k, status:cls(k.v,k.t,k.inv), bar:barW(k.v,k.t,k.inv)}));
+
+// Overall counts
+let cG=0,cY=0,cR=0;
+kpis.forEach(k=>{ if(k.status==="g") cG++; else if(k.status==="y") cY++; else cR++; });
+document.getElementById("cnt-g").textContent=cG;
+document.getElementById("cnt-y").textContent=cY;
+document.getElementById("cnt-r").textContent=cR;
+
+// Render tabs + panels
+const tabsEl = document.getElementById("tabs");
+const panelsEl = document.getElementById("panels");
+
+PILLARS.forEach((p,pi) => {
+  const pk = kpis.filter(k=>k.p===p.id);
+  const pg=pk.filter(k=>k.status==="g").length;
+  const py=pk.filter(k=>k.status==="y").length;
+  const pr=pk.filter(k=>k.status==="r").length;
+  const pct = Math.round((pg/pk.length)*100);
+
+  // ── Tab ──
+  const tab = document.createElement("div");
+  tab.className = "tab" + (pi===0?" active":"");
+  tab.dataset.p = p.id;
+  tab.innerHTML = `<div class="tab-code" style="color:${p.color}">${p.code}</div><div class="tab-dots" title="🟢${pg} 🟡${py} 🔴${pr}">🟢${pg} 🔴${pr}</div>`;
+  tab.onclick = () => {
+    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach(t=>t.classList.remove("active"));
+    tab.classList.add("active");
+    document.getElementById("panel-"+p.id).classList.add("active");
+  };
+  tabsEl.appendChild(tab);
+
+  // ── Panel ──
+  const kHTML = pk.map(k=>`
+    <div class="kitem">
+      <div class="kitem-top">
+        <span class="kcode">${k.code}</span>
+        <span class="kname">${k.name}</span>
+        <span class="kdot ${k.status}"></span>
+      </div>
+      <div class="kitem-mid">
+        <span class="kval ${k.status}">${fmt(k.v)}</span>
+        <span class="kunit">${k.unit}</span>
+        <span class="ktarget">เป้า ${fmt(k.t)} ${k.unit}</span>
+      </div>
+      <div class="kbar"><div class="kbar-fill ${k.status}" style="width:${k.bar}%"></div></div>
+    </div>
+  `).join("");
+
+  const panel = document.createElement("div");
+  panel.className = "panel" + (pi===0?" active":"");
+  panel.id = "panel-"+p.id;
+  panel.innerHTML = `
+    <div class="hero">
+      <div class="hero-ring">
+        <div class="ring-wrap">
+          ${ringSVG(pct, p.color)}
+          <div class="ring-center">
+            <div class="ring-pct" style="color:${p.color}">${pct}%</div>
+            <div class="ring-sub">บรรลุ</div>
+          </div>
+        </div>
+      </div>
+      <div class="hero-info">
+        <div class="hero-name" style="color:${p.color}">${p.name}</div>
+        <div class="hero-en">${p.en}</div>
+        <div class="hero-stats">
+          <div class="hs"><div class="hs-n" style="color:var(--green)">${pg}</div><div class="hs-l">บรรลุ</div></div>
+          <div class="hs"><div class="hs-n" style="color:var(--yellow)">${py}</div><div class="hs-l">เฝ้าระวัง</div></div>
+          <div class="hs"><div class="hs-n" style="color:var(--red)">${pr}</div><div class="hs-l">ต้องเร่ง</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="klist">${kHTML}</div>
+  `;
+  panelsEl.appendChild(panel);
+});
+</script>
+</body>
+</html>
