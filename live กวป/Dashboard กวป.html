@@ -6,7 +6,7 @@
   <title>Dashboard กวป. — Provincial Health Planning Committee</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap" />
   <style>
     :root {
       --accent: #2F8F7A;
@@ -24,17 +24,17 @@
       --r-lg: 14px;
 
       --pad-x: 32px;
-      --gap-md: 14px;
-      --gap-lg: 20px;
+      --gap-md: 16px;
+      --gap-lg: 24px;
     }
     [data-density="compact"] {
       --pad-x: 24px;
-      --gap-md: 10px;
-      --gap-lg: 14px;
+      --gap-md: 12px;
+      --gap-lg: 16px;
     }
     * { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: "IBM Plex Sans Thai","IBM Plex Sans",system-ui,sans-serif; -webkit-font-smoothing: antialiased; }
-    body { font-size: 14px; line-height: 1.45; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: "Prompt","Inter",system-ui,sans-serif; -webkit-font-smoothing: antialiased; }
+    body { font-size: 14px; line-height: 1.5; }
     button { font-family: inherit; cursor: pointer; }
 
     .app { min-height: 100vh; display: flex; flex-direction: column; }
@@ -229,7 +229,23 @@
     .btn.primary { background: var(--ink); color: #FFF; border-color: var(--ink); margin-left: auto; }
 
     /* Tweaks panel chrome override */
-    .tweaks-panel { font-family: "IBM Plex Sans Thai", "IBM Plex Sans", sans-serif !important; }
+    .tweaks-panel { font-family: "Prompt", "Inter", sans-serif !important; }
+
+    /* ========== RESPONSIVE / EXECUTIVE VIEW ========== */
+    @media (max-width: 768px) {
+      .sum-headline { grid-template-columns: 1fr; gap: 16px; }
+      .sum-stack { grid-template-columns: 1fr; }
+      .pillar-strip { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .kpi-grid { grid-template-columns: 1fr; }
+      .topbar { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .topbar-right { width: 100%; justify-content: space-between; }
+      .drawer { width: 100%; max-width: 100vw; }
+      
+      /* Executive Print/Mobile Specific adjustments */
+      body { background: #FFFFFF; }
+      .main { padding: 16px; }
+      .kpi-card { box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    }
   </style>
 </head>
 <body>
@@ -241,6 +257,7 @@
 
   <script type="text/babel" src="tweaks-panel.jsx"></script>
   <script type="text/babel" src="data.jsx"></script>
+  <script type="text/babel" src="api.jsx"></script>
   <script type="text/babel" src="primitives.jsx"></script>
   <script type="text/babel" src="components.jsx"></script>
   <script type="text/babel" src="drawer.jsx"></script>

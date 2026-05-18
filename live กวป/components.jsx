@@ -15,8 +15,8 @@ function Header({ period, setPeriod }) {
           </svg>
         </div>
         <div className="brand">
-          <div className="brand-title">สำนักงานสาธารณสุขจังหวัด · กวป. Monitoring</div>
-          <div className="brand-sub">คณะกรรมการวางแผนและประเมินผล · Provincial Health Planning Committee</div>
+          <div className="brand-title">เขตสุขภาพที่ 10 · Health Region 10</div>
+          <div className="brand-sub">ระบบติดตามตัวชี้วัดสุขภาพ (DM/HT) · NCD Dashboard</div>
         </div>
       </div>
       <div className="topbar-right">
@@ -53,9 +53,9 @@ function Summary({ kpis }) {
     <section className="summary">
       <div className="sum-headline">
         <div>
-          <div className="sum-eyebrow">ภาพรวมผลการดำเนินงาน · ไตรมาส 2/2568</div>
+          <div className="sum-eyebrow">ภาพรวมผลการดำเนินงาน · ข้อมูล DM/HT</div>
           <h1 className="sum-title">บรรลุเป้าหมาย <span style={{ color: "#1F8A5B" }}>{ach}%</span> ของตัวชี้วัดทั้งหมด</h1>
-          <div className="sum-sub">{total} ตัวชี้วัด · 13 อำเภอในเขตรับผิดชอบ · ข้อมูล ณ 30 เม.y. 2568</div>
+          <div className="sum-sub">{total} ตัวชี้วัด · 5 จังหวัดในเขตสุขภาพที่ 10</div>
         </div>
         <div className="sum-stack">
           {[

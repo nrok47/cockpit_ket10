@@ -15,6 +15,18 @@ function App() {
   const [sort, setSort] = useState("status");
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(null);
+  
+  // Dynamic Data State
+  const [kpiList, setKpiList] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Fetch data on mount
+    fetchHealthData().then(data => {
+      setKpiList(data);
+      setIsLoading(false);
+    });
+  }, []);
 
   useEffect(() => {
     document.documentElement.style.setProperty("--accent", tweaks.accent);
@@ -23,7 +35,7 @@ function App() {
 
   // Filtering
   const filtered = useMemo(() => {
-    let arr = KPIS.slice();
+    let arr = kpiList.slice();
     if (filter !== "all") arr = arr.filter(k => k.pillar === filter);
     if (q.trim()) {
       const s = q.trim().toLowerCase();
@@ -41,16 +53,20 @@ function App() {
   }, [filter, q, sort]);
 
   const count = useMemo(() => {
-    const c = { all: KPIS.length };
-    PILLARS.forEach(p => c[p.id] = KPIS.filter(k => k.pillar === p.id).length);
+    const c = { all: kpiList.length };
+    PILLARS.forEach(p => c[p.id] = kpiList.filter(k => k.pillar === p.id).length);
     return c;
-  }, []);
+  }, [kpiList]);
+
+  if (isLoading) {
+    return <div style={{ padding: '60px', textAlign: 'center' }}>กำลังโหลดข้อมูลจากระบบ...</div>;
+  }
 
   return (
     <div className="app">
       <Header period={period} setPeriod={setPeriod} />
       <main className="main">
-        <Summary kpis={KPIS} />
+        <Summary kpis={kpiList} />
         <FilterBar filter={filter} setFilter={setFilter} view={view} setView={setView} sort={sort} setSort={setSort} q={q} setQ={setQ} count={count} />
 
         {view === "grid" ? (
