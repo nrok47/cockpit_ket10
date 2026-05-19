@@ -48,24 +48,30 @@ function Drawer({ kpi, onClose }) {
               <div className="dh-v" style={{ color: col.ring }}>{kpi.v.toFixed(1)}<span className="dh-u">%</span></div>
             </div>
             <div className="dh-stat">
-              <div className="dh-l">ผลรอบก่อน</div>
+              <div className="dh-l">ปี 2568</div>
               <div className="dh-v" style={{ fontWeight: 500, color: "#3F3933" }}>
-                {kpi.trend[kpi.trend.length - 2].toFixed(1)}<span className="dh-u">%</span>
+                {kpi.v68 != null
+                  ? <>{kpi.v68.toFixed(1)}<span className="dh-u">%</span></>
+                  : <span style={{ fontSize: 14, color: "#9C948A" }}>—</span>}
               </div>
             </div>
             <div className="dh-stat">
-              <div className="dh-l">เปลี่ยนแปลง</div>
-              <div className="dh-v"><Delta trend={kpi.trend} /></div>
+              <div className="dh-l">เปลี่ยนแปลง vs 2568</div>
+              <div className="dh-v">
+                {kpi.v68 != null
+                  ? <Delta trend={[kpi.v68, kpi.v69 ?? kpi.v]} />
+                  : <span style={{ fontSize: 14, color: "#9C948A" }}>—</span>}
+              </div>
             </div>
           </div>
         </div>
 
         <div className="drawer-section">
           <div className="ds-head">
-            <h3>แนวโน้มย้อนหลัง 5 รอบ</h3>
-            <span className="ds-sub">ข้อมูลรายไตรมาส</span>
+            <h3>เปรียบเทียบรายปี</h3>
+            <span className="ds-sub">ปีงบประมาณ 2567 · 2568 · 2569</span>
           </div>
-          <BigTrend trend={kpi.trend} target={kpi.target} status={kpi.status} invert={kpi.invert} />
+          <BigTrend trend={kpi.trend} target={kpi.target} status={kpi.status} />
         </div>
 
         <div className="drawer-section">
@@ -109,44 +115,77 @@ function Drawer({ kpi, onClose }) {
         </div>
 
         <div className="drawer-foot">
-          <button className="btn ghost">ดาวน์โหลด CSV</button>
-          <button className="btn primary">เปิดรายงานเต็ม →</button>
+          <button className="btn ghost" onClick={() => {
+            const sheet = kpi.csvUrl?.split("sheet=")[1] ?? "";
+            if (!sheet) return;
+            const url = `https://docs.google.com/spreadsheets/d/1RlIRo8vZ0fgQOj-vVZ72P9ioUgxIY_WWQw4AfjNV_Pg/gviz/tq?tqx=out:csv&sheet=${sheet}`;
+            Object.assign(document.createElement("a"), { href: url, download: `${kpi.code}.csv` }).click();
+          }}>ดาวน์โหลด CSV</button>
+          <button className="btn primary"
+            onClick={() => {
+              if (kpi.sourceUrl) window.open(kpi.sourceUrl, "_blank");
+              else window.open(`report.html?kpi=${kpi.code}`, "_blank");
+            }}>
+            เปิดรายงานเต็ม →
+          </button>
         </div>
       </aside>
     </>
   );
 }
 
-function BigTrend({ trend, target, status, invert }) {
-  const W = 520, H = 180, padL = 40, padR = 12, padT = 16, padB = 28;
-  const lo = Math.min(target * 0.6, ...trend) - 5;
-  const hi = Math.max(target * 1.1, ...trend) + 5;
-  const x = i => padL + (i * (W - padL - padR)) / (trend.length - 1);
-  const y = v => padT + (1 - (v - lo) / (hi - lo)) * (H - padT - padB);
-  const labels = ["Q2/67","Q3/67","Q4/67","Q1/68","Q2/68"];
-  const path = trend.map((v, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
-  const area = `${path} L${x(trend.length - 1)},${H - padB} L${padL},${H - padB} Z`;
-  const col = STATUS_COLORS[status].ring;
-  const ticks = [lo, lo + (hi - lo) * 0.5, hi];
+function BigTrend({ trend, target, status }) {
+  // trend = [v2567, v2568, v2569]
+  const [v67, v68, v69] = trend;
+  const col   = STATUS_COLORS[status].ring;
+  const W = 520, H = 175, pL = 46, pR = 20, pT = 34, pB = 36;
+  const chartW = W - pL - pR, chartH = H - pT - pB;
+  const maxV   = Math.max(target * 1.15, v67, v68, v69, 1);
+  const yPos   = v => pT + chartH * (1 - v / maxV);
+  const bW     = chartW * 0.18;
+  const gap    = (chartW - bW * 3) / 4;
+  const cx1    = pL + gap + bW / 2;
+  const cx2    = pL + gap * 2 + bW * 1.5;
+  const cx3    = pL + gap * 3 + bW * 2.5;
+  const ticks  = [0, Math.round(maxV * 0.5), Math.round(maxV)];
+  const targetY = yPos(target);
+  const delta   = v69 - v68;
+  const deltaUp = delta >= 0;
+
+  const bar = (cx, v, fill, labelStyle, yr, isMain) => (
+    <g key={yr}>
+      <rect x={cx - bW / 2} y={yPos(v)} width={bW} height={(v / maxV) * chartH}
+        rx="5" fill={fill} opacity={isMain ? 1 : 0.75} />
+      <text x={cx} y={yPos(v) - 7} textAnchor="middle"
+        style={{ font: `${isMain ? "700" : "600"} 11px 'IBM Plex Sans'`, fill: isMain ? "#161310" : "#475569" }}>
+        {v.toFixed(1)}%
+      </text>
+      <text x={cx} y={H - pB + 16} textAnchor="middle" style={labelStyle}>{yr}</text>
+    </g>
+  );
+
   return (
     <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", display: "block" }}>
       {ticks.map((t, i) => (
         <g key={i}>
-          <line x1={padL} x2={W - padR} y1={y(t)} y2={y(t)} stroke="#EFEAE3" strokeDasharray="3 3" />
-          <text x={padL - 6} y={y(t) + 3} textAnchor="end" style={{ font: "500 10px 'IBM Plex Sans'", fill: "#9C948A" }}>{t.toFixed(0)}</text>
+          <line x1={pL} x2={W - pR} y1={yPos(t)} y2={yPos(t)} stroke="#EFEAE3" strokeDasharray="3 3" />
+          <text x={pL - 6} y={yPos(t) + 4} textAnchor="end"
+            style={{ font: "500 10px 'IBM Plex Sans'", fill: "#9C948A" }}>{t}</text>
         </g>
       ))}
-      <line x1={padL} x2={W - padR} y1={y(target)} y2={y(target)} stroke="#161310" strokeDasharray="6 4" strokeWidth="1" opacity="0.45" />
-      <text x={W - padR - 4} y={y(target) - 6} textAnchor="end" style={{ font: "600 10px 'IBM Plex Sans'", fill: "#161310" }}>เป้า {target}%</text>
-      <path d={area} fill={col} opacity="0.12" />
-      <path d={path} fill="none" stroke={col} strokeWidth="2" />
-      {trend.map((v, i) => (
-        <g key={i}>
-          <circle cx={x(i)} cy={y(v)} r="4" fill="#FFF" stroke={col} strokeWidth="2" />
-          <text x={x(i)} y={y(v) - 10} textAnchor="middle" style={{ font: "600 10px 'IBM Plex Sans'", fill: "#161310" }}>{v.toFixed(1)}</text>
-          <text x={x(i)} y={H - 8} textAnchor="middle" style={{ font: "500 10px 'IBM Plex Sans'", fill: "#7C746B" }}>{labels[i]}</text>
-        </g>
-      ))}
+      <line x1={pL} x2={W - pR} y1={targetY} y2={targetY}
+        stroke="#161310" strokeDasharray="5 4" strokeWidth="1.5" opacity="0.45" />
+      <text x={W - pR - 4} y={targetY - 5} textAnchor="end"
+        style={{ font: "600 10px 'IBM Plex Sans'", fill: "#161310" }}>เป้า {target}%</text>
+
+      {bar(cx1, v67, "#CBD5E1", { font: "500 11px 'IBM Plex Sans'", fill: "#7C746B" }, "ปี 2567", false)}
+      {bar(cx2, v68, "#94A3B8", { font: "500 11px 'IBM Plex Sans'", fill: "#475569" }, "ปี 2568", false)}
+      {bar(cx3, v69, col,      { font: "700 12px 'IBM Plex Sans'", fill: "#161310" }, "ปี 2569", true)}
+
+      <text x={W / 2} y={pT - 12} textAnchor="middle"
+        style={{ font: "600 11.5px 'IBM Plex Sans'", fill: deltaUp ? "#1F8A5B" : "#C4452B" }}>
+        {deltaUp ? "▲" : "▼"} {Math.abs(delta).toFixed(1)}% จากปี 2568
+      </text>
     </svg>
   );
 }

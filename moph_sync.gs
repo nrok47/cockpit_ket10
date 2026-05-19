@@ -8,97 +8,172 @@
  */
 
 const API_URL = "https://opendata.moph.go.th/api/report_data";
+// 📋 วิธีดูชื่อตาราง + column definitions:
+//    เปิด https://opendata.moph.go.th → Summary Table → ค้นหาตาราง
+//    หน้าตารางจะแสดง: ชื่อรายงาน, โครงสร้างตาราง (column comment), ปีที่มีข้อมูล, ตัวอย่างข้อมูล
+//    URI Service ในหน้านั้นจะบอกชื่อ tableName ที่ถูกต้องสำหรับ API call
 
 // รหัสจังหวัดในเขตสุขภาพที่ 10
 // 33 = ศรีสะเกษ, 34 = อุบลราชธานี, 35 = ยโสธร, 37 = อำนาจเจริญ, 49 = มุกดาหาร
 const PROVINCES = ["33", "34", "35", "37", "49"];
-const YEAR = "2568";
 
-// เพิ่มตารางที่ต้องการดึงข้อมูลที่นี่
-const TABLE_NAMES = [
-  "s_early_anc", 
-  "s_labor1519", 
-  "s_dm_ht_control", 
-  "s_aged10"
-]; 
+// ปีงบประมาณ — เพิ่ม "2566" ไว้เผื่อตารางบางตัวล็อก data ปีก่อน
+// ปีงบประมาณไทย: ต.ค.–ก.ย. → เดือน ≥ 10 ขยับปีถัดไป
+function getThaiYear() {
+  const now = new Date();
+  const add = now.getMonth() + 1 >= 10 ? 544 : 543;
+  return now.getFullYear() + add;
+}
+const THIS_YEAR      = getThaiYear();
+const YEARS_DEFAULT  = [String(THIS_YEAR - 2), String(THIS_YEAR - 1), String(THIS_YEAR)];
+const YEARS_EXTENDED = [String(THIS_YEAR - 3), String(THIS_YEAR - 2), String(THIS_YEAR - 1), String(THIS_YEAR)];
 
+// ── TABLE CONFIG ────────────────────────────────────────────────────────────
+// years: override ปีที่จะดึง (ถ้าไม่ระบุ ใช้ YEARS_DEFAULT)
+// ────────────────────────────────────────────────────────────────────────────
+const TABLES = [
+  // ── ข้อมูลจริงที่ใช้อยู่แล้ว ──────────────────────────────
+  { name: "s_dm_ht_control" },
+  { name: "s_aged10"        },
+  { name: "s_child"         },
+  { name: "s_early_anc",  years: YEARS_EXTENDED },
+  { name: "s_labor1519",  years: YEARS_EXTENDED },
+
+  // ── Phase 1: confirmed new tables ──────────────────────────
+  // CHD-03: workload คัดกรองพัฒนาการเด็ก 0-5 ปี (c_1=9m, c_2=18m, c_3=30m, c_4=42m, c_5=60m)
+  // หมายเหตุ: ข้อมูลปี 2569 ยังว่าง → ใช้ 2568 เป็นปีล่าสุด
+  { name: "s_child0_5_pshyche_develop_workload", years: [String(THIS_YEAR-2), String(THIS_YEAR-1)] },
+
+  // ── MCH-03: เด็กแรกเกิด-6 เดือน กินนมแม่อย่างเดียว ──────────
+  // ชื่อจริง: "ร้อยละของเด็กแรกเกิด - ต่ำกว่า 6 เดือน กินนมแม่อย่างเดียว"
+  { name: "s_kpi_food" },
+];
+
+// ────────────────────────────────────────────────────────────────────────────
+// MAIN
+// ────────────────────────────────────────────────────────────────────────────
 function fetchMophApi() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
 
-  for (const tableName of TABLE_NAMES) {
+  for (const table of TABLES) {
+    const tableName = table.name;
+    const years     = table.years || YEARS_DEFAULT;
+
     Logger.log("=========================================");
-    Logger.log("Processing table: " + tableName);
-    
-    // ค้นหา Sheet ที่ชื่อตรงกับ Table ถ้าไม่มีให้สร้างใหม่
+    Logger.log("Table: " + tableName + " | Years: " + years.join(", "));
+
     let sheet = ss.getSheetByName(tableName);
-    if (!sheet) {
-      sheet = ss.insertSheet(tableName);
-    }
-    sheet.clear(); // ล้างข้อมูลเก่า
-    
+    if (!sheet) sheet = ss.insertSheet(tableName);
+    sheet.clear();
+
     let isHeaderWritten = false;
     let totalRows = 0;
 
-    for (const provinceCode of PROVINCES) {
-      try {
-        const payload = {
-          "tableName": tableName,
-          "year": YEAR,
-          "province": provinceCode,
-          "type": "json"
-        };
+    for (const year of years) {
+      Logger.log("--- Year: " + year + " ---");
 
-        const options = {
-          "method": "post",
-          "headers": {
-            "Content-Type": "application/json"
-          },
-          "payload": JSON.stringify(payload),
-          "muteHttpExceptions": true
-        };
-        
-        const response = UrlFetchApp.fetch(API_URL, options);
-        const statusCode = response.getResponseCode();
-        
-        if (statusCode !== 200 && statusCode !== 201) {
-          if (statusCode === 404) {
-            Logger.log("Info: No data available on server (404) for province " + provinceCode);
-          } else {
-            Logger.log("Error for province " + provinceCode + ": API returned status " + statusCode);
+      for (const provinceCode of PROVINCES) {
+        try {
+          const payload = { tableName, year, province: provinceCode, type: "json" };
+          const options = {
+            method: "post",
+            headers: { "Content-Type": "application/json" },
+            payload: JSON.stringify(payload),
+            muteHttpExceptions: true
+          };
+
+          const response = UrlFetchApp.fetch(API_URL, options);
+          const statusCode = response.getResponseCode();
+
+          if (statusCode !== 200 && statusCode !== 201) {
+            Logger.log("  Skip " + provinceCode + "/" + year + " → HTTP " + statusCode);
+            // debug: log 50 chars of body เพื่อดู error message
+            try {
+              const body = response.getContentText().substring(0, 120);
+              Logger.log("  Body: " + body);
+            } catch(_) {}
+            continue;
           }
-          continue;
+
+          const json = JSON.parse(response.getContentText());
+          const dataArray = json.data || json;
+
+          if (!Array.isArray(dataArray) || dataArray.length === 0) {
+            Logger.log("  Empty: " + provinceCode + "/" + year);
+            continue;
+          }
+
+          const headers = Object.keys(dataArray[0]);
+          if (!isHeaderWritten) {
+            sheet.appendRow(["year", ...headers]);
+            isHeaderWritten = true;
+          }
+
+          const rows = dataArray.map(item => [year, ...headers.map(h => item[h])]);
+          sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
+          totalRows += rows.length;
+          Logger.log("  OK: " + provinceCode + "/" + year + " → " + rows.length + " rows");
+
+        } catch (e) {
+          Logger.log("  Exception " + provinceCode + "/" + year + ": " + e.toString());
         }
-        
-        const json = JSON.parse(response.getContentText());
-        const dataArray = json.data || json; 
-        
-        if (!Array.isArray(dataArray) || dataArray.length === 0) {
-          Logger.log("No data found for province: " + provinceCode);
-          continue;
-        }
-        
-        // ดึง Header จาก Keys ของ Object แรก (ทำแค่ครั้งเดียวต่อ Sheet)
-        const headers = Object.keys(dataArray[0]);
-        if (!isHeaderWritten) {
-          sheet.appendRow(headers);
-          isHeaderWritten = true;
-        }
-        
-        // เตรียมข้อมูลแถว
-        const rows = dataArray.map(item => {
-          return headers.map(header => item[header]);
-        });
-        
-        // เขียนข้อมูลลง Sheet ต่อจากบรรทัดสุดท้าย
-        const startRow = sheet.getLastRow() + 1;
-        sheet.getRange(startRow, 1, rows.length, headers.length).setValues(rows);
-        totalRows += rows.length;
-        
-      } catch (e) {
-        Logger.log("Exception occurred for province " + provinceCode + ": " + e.toString());
       }
     }
-    
-    Logger.log("Successfully updated " + tableName + " with total " + totalRows + " rows.");
+
+    Logger.log("Done: " + tableName + " → " + totalRows + " total rows");
   }
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// DEBUG: ทดสอบตารางเดียว — รันฟังก์ชันนี้เพื่อดู columns + ตัวอย่างข้อมูล
+// เปลี่ยน TABLE_TO_PROBE และ PROBE_YEAR ตามต้องการ
+// ────────────────────────────────────────────────────────────────────────────
+// ── เปลี่ยน TABLE_TO_PROBE แล้วรัน probeTable() ──────────────
+// Phase 1 probe list (ทดสอบทีละตัว):
+//   "s_tb"           → วัณโรค (TB-01)
+//   "s_mental"       → สุขภาพจิต ซึมเศร้า (MH-01)
+//   "s_breastfeed"   → นมแม่อย่างเดียว (MCH-03)
+//   "s_dengue"       → ไข้เลือดออก (DEN-01)
+const TABLE_TO_PROBE = "s_kpi_food"; // MCH-03? โภชนาการ? ดูจาก log
+const PROBE_YEAR     = String(THIS_YEAR);
+const PROBE_PROVINCE = "34"; // อุบล
+
+function probeTable() {
+  // ถ้าได้ 400 "Parameter Invalid" → ลองเปลี่ยน province หลายค่า
+  const PROBE_PROVINCES = ["34", "11", "10", "33", "49"]; // "11"=นนทบุรี ตัวอย่างจาก MOPH
+  const PROBE_YEARS     = [PROBE_YEAR, String(THIS_YEAR - 1), String(THIS_YEAR - 2), "2566"];
+
+  for (const yr of PROBE_YEARS) {
+    for (const pv of PROBE_PROVINCES) {
+      const payload = { tableName: TABLE_TO_PROBE, year: yr, province: pv, type: "json" };
+      const options = {
+        method: "post",
+        headers: { "Content-Type": "application/json" },
+        payload: JSON.stringify(payload),
+        muteHttpExceptions: true
+      };
+      const response = UrlFetchApp.fetch(API_URL, options);
+      const status   = response.getResponseCode();
+      const body     = response.getContentText();
+
+      Logger.log(`year=${yr} province="${pv}" → HTTP ${status}`);
+
+      if (status === 200 || status === 201) {
+        try {
+          const json = JSON.parse(body);
+          const arr  = json.data || json;
+          if (Array.isArray(arr) && arr.length > 0) {
+            Logger.log("✅ SUCCESS! Columns: " + Object.keys(arr[0]).join(", "));
+            Logger.log("Row 0: " + JSON.stringify(arr[0]));
+            return; // หยุดทันทีเมื่อได้ข้อมูล
+          } else {
+            Logger.log("  → Empty response");
+          }
+        } catch(e) { Logger.log("  → Parse error: " + e); }
+      } else {
+        Logger.log("  → " + body.substring(0, 80));
+      }
+    }
+  }
+  Logger.log("❌ ไม่พบ parameter ที่ใช้ได้สำหรับ " + TABLE_TO_PROBE);
 }

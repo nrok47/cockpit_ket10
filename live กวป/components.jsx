@@ -21,14 +21,13 @@ function Header({ period, setPeriod }) {
       </div>
       <div className="topbar-right">
         <div className="period">
-          <button className={"chip " + (period === "Q1" ? "on" : "")} onClick={() => setPeriod("Q1")}>ไตรมาส 1</button>
-          <button className={"chip " + (period === "Q2" ? "on" : "")} onClick={() => setPeriod("Q2")}>ไตรมาส 2</button>
-          <button className={"chip " + (period === "Q3" ? "on" : "")} onClick={() => setPeriod("Q3")}>ไตรมาส 3</button>
-          <button className={"chip " + (period === "Q4" ? "on" : "")} onClick={() => setPeriod("Q4")}>ไตรมาส 4</button>
+          <button className="chip on">ปี 2569</button>
+          <button className="chip" style={{ opacity: .65 }}>vs 2568</button>
+          <button className="chip" style={{ opacity: .5 }}>vs 2567</button>
         </div>
         <div className="meta">
           <div className="meta-l">ปีงบประมาณ</div>
-          <div className="meta-v">2568</div>
+          <div className="meta-v">2569</div>
         </div>
         <div className="user">
           <div className="avatar">ผว</div>
@@ -161,6 +160,11 @@ function KpiCard({ k, onOpen }) {
           <span style={{ width: 5, height: 5, borderRadius: "50%", background: p.accent, display: "inline-block" }} />
           {p.code}
         </span>
+        {k.isMock && (
+          <span style={{ fontSize: 10, fontWeight: 600, color: "#9C948A", background: "#F2EEE8", border: "1px solid #E4DED5", borderRadius: 4, padding: "2px 6px" }}>
+            รอข้อมูล
+          </span>
+        )}
         <span className="kpi-status" style={{ color: col.text, background: col.soft }}>
           <StatusDot status={k.status} />
           {col.label}
