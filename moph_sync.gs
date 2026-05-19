@@ -47,6 +47,14 @@ const TABLES = [
   // ── MCH-03: เด็กแรกเกิด-6 เดือน กินนมแม่อย่างเดียว ──────────
   // ชื่อจริง: "ร้อยละของเด็กแรกเกิด - ต่ำกว่า 6 เดือน กินนมแม่อย่างเดียว"
   { name: "s_kpi_food" },
+
+  // ── CHD-04: ภาวะโลหิตจางในเด็กอายุครบ 5 ปี ──────────────────
+  // ชื่อจริง: "ร้อยละเด็กอายุครบ 5 ปีในเขตรับผิดชอบ มีภาวะโลหิตจาง (Coverage)"
+  // inv=true (ยิ่งน้อยยิ่งดี) → col mapping ยืนยันหลัง probeTable
+  { name: "s_child4_hct" },
+
+  // ── WRA-01: s_hct1549 → 404 ทุก province/year → ใช้ Pattern B (link-only)
+  // { name: "s_hct1549" },  // comment out — API ไม่พร้อม
 ];
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -82,16 +90,21 @@ function fetchMophApi() {
             muteHttpExceptions: true
           };
 
-          const response = UrlFetchApp.fetch(API_URL, options);
-          const statusCode = response.getResponseCode();
+          // retry สูงสุด 5 รอบ ห่างกัน 13 วิ — ถ้าไม่ผ่านทุกรอบ skip
+          const MAX_RETRY = 5;
+          let response, statusCode;
+          for (let attempt = 1; attempt <= MAX_RETRY; attempt++) {
+            response   = UrlFetchApp.fetch(API_URL, options);
+            statusCode = response.getResponseCode();
+            if (statusCode === 200 || statusCode === 201) break;
+            if (attempt < MAX_RETRY) {
+              Logger.log("  [" + attempt + "/" + MAX_RETRY + "] รอ 13s แล้วลองใหม่ (" + provinceCode + "/" + year + ")...");
+              Utilities.sleep(13000);
+            }
+          }
 
           if (statusCode !== 200 && statusCode !== 201) {
-            Logger.log("  Skip " + provinceCode + "/" + year + " → HTTP " + statusCode);
-            // debug: log 50 chars of body เพื่อดู error message
-            try {
-              const body = response.getContentText().substring(0, 120);
-              Logger.log("  Body: " + body);
-            } catch(_) {}
+            Logger.log("  ❌ ปล่อยไป " + provinceCode + "/" + year + " หลัง " + MAX_RETRY + " รอบ → HTTP " + statusCode);
             continue;
           }
 
@@ -125,6 +138,81 @@ function fetchMophApi() {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
+// ADMIN WEB APP
+// Deploy → New Deployment → Web App → Execute as Me → Anyone with link
+// ────────────────────────────────────────────────────────────────────────────
+function doGet() {
+  return HtmlService.createHtmlOutputFromFile("admin")
+    .setTitle("Admin Sync — KPI ศอ.10")
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+// ดึงข้อมูลตารางเดียว — เรียกจาก admin.html ผ่าน google.script.run
+function fetchSingleTable(tableName) {
+  const tableConfig = TABLES.find(t => t.name === tableName);
+  if (!tableConfig) throw new Error("ไม่พบตาราง: " + tableName);
+
+  const ss    = SpreadsheetApp.getActiveSpreadsheet();
+  const years = tableConfig.years || YEARS_DEFAULT;
+
+  let sheet = ss.getSheetByName(tableName);
+  if (!sheet) sheet = ss.insertSheet(tableName);
+  sheet.clear();
+
+  let isHeaderWritten = false, totalRows = 0, skipped = 0;
+  const MAX_RETRY = 5;
+
+  for (const year of years) {
+    for (const prov of PROVINCES) {
+      const payload = { tableName, year, province: prov, type: "json" };
+      const options = {
+        method: "post",
+        headers: { "Content-Type": "application/json" },
+        payload: JSON.stringify(payload),
+        muteHttpExceptions: true
+      };
+
+      let response, statusCode;
+      for (let i = 1; i <= MAX_RETRY; i++) {
+        response   = UrlFetchApp.fetch(API_URL, options);
+        statusCode = response.getResponseCode();
+        if (statusCode === 200 || statusCode === 201) break;
+        if (i < MAX_RETRY) Utilities.sleep(13000);
+      }
+
+      if (statusCode !== 200 && statusCode !== 201) { skipped++; continue; }
+
+      const json      = JSON.parse(response.getContentText());
+      const dataArray = json.data || json;
+      if (!Array.isArray(dataArray) || dataArray.length === 0) continue;
+
+      const headers = Object.keys(dataArray[0]);
+      if (!isHeaderWritten) { sheet.appendRow(["year", ...headers]); isHeaderWritten = true; }
+
+      const rows = dataArray.map(item => [year, ...headers.map(h => item[h])]);
+      sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
+      totalRows += rows.length;
+    }
+  }
+
+  return { rows: totalRows, skipped, table: tableName };
+}
+
+// ดึงทุกตารางพร้อมกัน (เรียกจาก admin หรือ trigger)
+function fetchAllTables() {
+  const results = [];
+  for (const table of TABLES) {
+    try {
+      const r = fetchSingleTable(table.name);
+      results.push(r);
+    } catch(e) {
+      results.push({ table: table.name, rows: 0, skipped: -1, error: e.message });
+    }
+  }
+  return results;
+}
+
+// ────────────────────────────────────────────────────────────────────────────
 // DEBUG: ทดสอบตารางเดียว — รันฟังก์ชันนี้เพื่อดู columns + ตัวอย่างข้อมูล
 // เปลี่ยน TABLE_TO_PROBE และ PROBE_YEAR ตามต้องการ
 // ────────────────────────────────────────────────────────────────────────────
@@ -134,7 +222,8 @@ function fetchMophApi() {
 //   "s_mental"       → สุขภาพจิต ซึมเศร้า (MH-01)
 //   "s_breastfeed"   → นมแม่อย่างเดียว (MCH-03)
 //   "s_dengue"       → ไข้เลือดออก (DEN-01)
-const TABLE_TO_PROBE = "s_kpi_food"; // MCH-03? โภชนาการ? ดูจาก log
+const TABLE_TO_PROBE = "s_child4_hct"; // CHD-04 ภาวะโลหิตจางเด็ก → ลอง probe ก่อน
+// ถัดไปลอง: "s_hct1549"  (WRA-01 หญิงวัยเจริญพันธุ์)
 const PROBE_YEAR     = String(THIS_YEAR);
 const PROBE_PROVINCE = "34"; // อุบล
 

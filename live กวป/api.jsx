@@ -143,6 +143,40 @@ const KPI_CONFIG = [
     startRow: 1
   },
 
+  // ── CHD-04: ภาวะโลหิตจางในเด็กอายุครบ 5 ปี (s_child4_hct) ──
+  // ชื่อจริง: "ร้อยละเด็กอายุครบ 5 ปีฯ มีภาวะโลหิตจาง (Coverage)" inv=true
+  // ⚠ col mapping ยืนยันหลัง probeTable — ใช้ 6/7 ไปก่อน
+  {
+    code: "CHD-04",
+    pillar: "ppp",
+    name: "ภาวะโลหิตจางในเด็กอายุ 5 ปี",
+    en: "Anaemia Prevalence in Children Age 5",
+    target: 15,           // เป้า ≤15% (WHO threshold) inv=true
+    owner: "กลุ่มงานอนามัยแม่และเด็ก",
+    csvUrl: gvizBase + "s_child4_hct",
+    yearCol: 0,
+    targetColIndex: 6,    // col "total" = เด็กอายุครบ 5 ปีทั้งหมด (denominator)
+    resultColIndex: 8,    // col "result_ill" = จำนวนที่พบภาวะโลหิตจาง (numerator)
+    inv: true,
+    sourceUrl: `https://opendata.moph.go.th/th/services/summary-table/1ed90bc32310b503b7ca9b32af425ae5/s_child4_hct/`,
+    startRow: 1
+  },
+
+  // ── WRA-01: หญิงวัยเจริญพันธุ์ภาวะโลหิตจาง 15-49 ปี → Pattern B (link-only) ──
+  // s_hct1549 API ให้ 404 ทุก province/year → ใช้ fallback + link ไปต้นทาง
+  {
+    code: "WRA-01",
+    pillar: "ppp",
+    name: "หญิงวัยเจริญพันธุ์ 15-49 ปี มีภาวะโลหิตจาง",
+    en: "Anaemia in Women of Reproductive Age (15-49)",
+    target: 20,
+    owner: "กลุ่มงานอนามัยแม่และเด็ก",
+    csvUrl: null,
+    fallbackV: null,      // รอ CK กรอกค่าจากหน้า MOPH OD โดยตรง
+    inv: true,
+    sourceUrl: `https://opendata.moph.go.th/th/services/summary-table/46522b5bd1e06d24a5bd81917257a93c/s_hct1549/d33e0581f3a43d282023405565c85ba6`
+  },
+
   // ── Mock / Fallback + link-to-source ───────────────────────
   {
     code: "NCD-01",

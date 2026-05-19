@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Admin Sync — KPI ศอ.10</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap"/>
+  <style>
+    :root {
+      --green:#16a34a; --yellow:#d97706; --red:#dc2626;
+      --bg:#f1f5f9; --card:#fff; --line:#e2e8f0;
+      --ink:#0f172a; --ink3:#64748b; --teal:#0f766e;
+    }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:"Prompt","IBM Plex Sans Thai",sans-serif; background:var(--bg); color:var(--ink); font-size:14px; }
+
+    /* ── HEADER ── */
+    .hdr { background:linear-gradient(135deg,#0f766e,#064e3b); color:#fff; padding:18px 24px; display:flex; align-items:center; gap:14px; }
+    .hdr-icon { font-size:28px; }
+    .hdr-title { font-size:18px; font-weight:700; }
+    .hdr-sub { font-size:12px; opacity:.75; margin-top:2px; }
+    .hdr-right { margin-left:auto; }
+
+    .btn-all {
+      padding:10px 20px; background:rgba(255,255,255,.15); border:1.5px solid rgba(255,255,255,.35);
+      color:#fff; border-radius:9px; font:inherit; font-size:13px; font-weight:600;
+      cursor:pointer; transition:.15s;
+    }
+    .btn-all:hover { background:rgba(255,255,255,.25); }
+    .btn-all:disabled { opacity:.5; cursor:default; }
+
+    /* ── BODY ── */
+    .body { padding:20px 24px 40px; max-width:900px; margin:0 auto; display:flex; flex-direction:column; gap:14px; }
+
+    /* ── LOG ── */
+    .log-wrap { background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+    .log-head { padding:12px 16px; background:#f8fafc; border-bottom:1px solid var(--line); font-size:12px; font-weight:700; color:var(--ink3); text-transform:uppercase; letter-spacing:.06em; display:flex; justify-content:space-between; }
+    .log-body { padding:12px 16px; font-family:monospace; font-size:12px; line-height:1.7; max-height:160px; overflow-y:auto; color:#334155; white-space:pre-wrap; }
+    .log-body:empty::before { content:"รอคำสั่ง..."; color:var(--ink3); }
+
+    /* ── GRID ── */
+    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px; }
+
+    /* ── KPI CARD ── */
+    .kpi-card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; display:flex; flex-direction:column; gap:10px; transition:.15s; }
+    .kpi-card:hover { box-shadow:0 4px 16px rgba(0,0,0,.08); }
+
+    .card-top { display:flex; align-items:flex-start; gap:10px; }
+    .card-code { font-size:10px; font-family:monospace; font-weight:700; background:#f1f5f9; color:var(--ink3); padding:3px 7px; border-radius:5px; white-space:nowrap; }
+    .card-kpi { font-size:11px; font-weight:700; color:var(--teal); letter-spacing:.04em; }
+    .card-name { font-size:13px; font-weight:600; line-height:1.35; flex:1; }
+    .card-table { font-size:10.5px; font-family:monospace; color:var(--ink3); background:#f8fafc; padding:2px 6px; border-radius:4px; }
+
+    .card-years { font-size:11px; color:var(--ink3); }
+
+    .card-status { min-height:22px; font-size:12px; font-weight:500; padding:4px 8px; border-radius:6px; display:inline-block; }
+    .card-status.idle    { background:#f1f5f9; color:var(--ink3); }
+    .card-status.running { background:#fef3c7; color:#92400e; }
+    .card-status.ok      { background:#f0fdf4; color:var(--green); }
+    .card-status.err     { background:#fef2f2; color:var(--red); }
+
+    .btn-sync {
+      padding:8px 14px; background:var(--teal); color:#fff;
+      border:none; border-radius:8px; font:inherit; font-size:12.5px; font-weight:600;
+      cursor:pointer; transition:.15s; width:100%;
+    }
+    .btn-sync:hover:not(:disabled) { background:#065f46; }
+    .btn-sync:disabled { opacity:.5; cursor:default; }
+  </style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-icon">🗄️</div>
+  <div>
+    <div class="hdr-title">Admin Sync — KPI ศอ.10</div>
+    <div class="hdr-sub">ดึงข้อมูลจาก MOPH Open Data → Google Sheets</div>
+  </div>
+  <div class="hdr-right">
+    <button class="btn-all" id="btn-all" onclick="syncAll()">▶▶ Sync ทั้งหมด</button>
+  </div>
+</header>
+
+<div class="body">
+
+  <!-- Log -->
+  <div class="log-wrap">
+    <div class="log-head">
+      <span>📋 Log</span>
+      <span id="log-time"></span>
+    </div>
+    <div class="log-body" id="log"></div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="grid" id="grid"></div>
+
+</div>
+
+<script>
+// ── KPI ที่แสดงในหน้า Admin ──────────────────────────────────────────────
+const KPI_LIST = [
+  { table:"s_dm_ht_control",                   code:"NCD-03/04", kpi:"P1",  name:"DM/HT ควบคุมได้ดี",             years:"2567–2569" },
+  { table:"s_aged10",                           code:"ELD-01",    kpi:"P1",  name:"ผู้สูงอายุ ADL ≥ 12",            years:"2567–2568" },
+  { table:"s_child",                            code:"CHD-02",    kpi:"P1",  name:"ทารก LBW < 2,500g",             years:"2567–2569" },
+  { table:"s_early_anc",                        code:"MCH-01",    kpi:"P1",  name:"ฝากครรภ์ < 12 สัปดาห์",         years:"2566–2568" },
+  { table:"s_labor1519",                        code:"MCH-02",    kpi:"P1",  name:"คลอดวัยรุ่น 15–19 ปี",          years:"2566–2568" },
+  { table:"s_kpi_food",                         code:"MCH-03",    kpi:"P1",  name:"นมแม่อย่างเดียว 0–6 เดือน",     years:"2567–2569" },
+  { table:"s_child4_hct",                       code:"CHD-04",    kpi:"P1",  name:"ภาวะโลหิตจางเด็กอายุ 5 ปี",    years:"2567–2569" },
+  { table:"s_child0_5_pshyche_develop_workload",code:"CHD-03",    kpi:"P1",  name:"พัฒนาการเด็ก 0–5 ปี (workload)",years:"2567–2568" },
+];
+
+// ── สร้าง Cards ──────────────────────────────────────────────────────────
+const grid = document.getElementById("grid");
+KPI_LIST.forEach(k => {
+  const div = document.createElement("div");
+  div.className = "kpi-card";
+  div.id = "card-" + k.table;
+  div.innerHTML = `
+    <div class="card-top">
+      <div>
+        <div class="card-kpi">${k.kpi}</div>
+        <div class="card-code">${k.code}</div>
+      </div>
+      <div class="card-name">${k.name}</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span class="card-table">${k.table}</span>
+      <span class="card-years">${k.years}</span>
+    </div>
+    <div class="card-status idle" id="status-${k.table}">— รอ</div>
+    <button class="btn-sync" id="btn-${k.table}" onclick="syncOne('${k.table}')">▶ Sync</button>
+  `;
+  grid.appendChild(div);
+});
+
+// ── Log helper ───────────────────────────────────────────────────────────
+function log(msg) {
+  const el = document.getElementById("log");
+  const ts = new Date().toLocaleTimeString("th-TH");
+  el.textContent += "[" + ts + "] " + msg + "\n";
+  el.scrollTop = el.scrollHeight;
+  document.getElementById("log-time").textContent = ts;
+}
+
+function setStatus(table, cls, text) {
+  const el = document.getElementById("status-" + table);
+  if (!el) return;
+  el.className = "card-status " + cls;
+  el.textContent = text;
+}
+
+function setBtn(table, disabled) {
+  const b = document.getElementById("btn-" + table);
+  if (b) b.disabled = disabled;
+}
+
+// ── Sync one table ───────────────────────────────────────────────────────
+function syncOne(tableName) {
+  setStatus(tableName, "running", "⏳ กำลัง sync...");
+  setBtn(tableName, true);
+  log("▶ เริ่ม sync: " + tableName);
+
+  google.script.run
+    .withSuccessHandler(result => {
+      const msg = result.rows + " rows" + (result.skipped > 0 ? " (ปล่อยไป " + result.skipped + " รอบ)" : " ✅");
+      setStatus(tableName, "ok", "✅ " + msg);
+      setBtn(tableName, false);
+      log("✅ " + tableName + " → " + msg);
+    })
+    .withFailureHandler(err => {
+      setStatus(tableName, "err", "❌ " + err.message);
+      setBtn(tableName, false);
+      log("❌ " + tableName + " → " + err.message);
+    })
+    .fetchSingleTable(tableName);
+}
+
+// ── Sync all (sequential via queue) ─────────────────────────────────────
+async function syncAll() {
+  document.getElementById("btn-all").disabled = true;
+  log("▶▶ เริ่ม Sync ทั้งหมด (" + KPI_LIST.length + " ตาราง)");
+
+  for (const k of KPI_LIST) {
+    await new Promise(resolve => {
+      setStatus(k.table, "running", "⏳ กำลัง sync...");
+      setBtn(k.table, true);
+      log("▶ " + k.table + "...");
+
+      google.script.run
+        .withSuccessHandler(result => {
+          const msg = result.rows + " rows" + (result.skipped > 0 ? " (ปล่อยไป " + result.skipped + ")" : " ✅");
+          setStatus(k.table, "ok", "✅ " + msg);
+          setBtn(k.table, false);
+          log("✅ " + k.table + " → " + msg);
+          resolve();
+        })
+        .withFailureHandler(err => {
+          setStatus(k.table, "err", "❌ " + err.message);
+          setBtn(k.table, false);
+          log("❌ " + k.table + " → " + err.message);
+          resolve();
+        })
+        .fetchSingleTable(k.table);
+    });
+  }
+
+  document.getElementById("btn-all").disabled = false;
+  log("✅ Sync ทั้งหมดเสร็จแล้ว");
+}
+
+log("พร้อมใช้งาน — เลือก Sync รายตัว หรือกด Sync ทั้งหมด");
+</script>
+</body>
+</html>
