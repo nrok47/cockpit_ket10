@@ -9,7 +9,7 @@ const APP_DEFAULTS = /*EDITMODE-BEGIN*/{
 
 function App() {
   const [tweaks, setTweak] = useTweaks(APP_DEFAULTS);
-  const [period, setPeriod] = useState("Q2");
+  const [period, setPeriod] = useState("2569"); // ปีปัจจุบัน
   const [filter, setFilter] = useState("all");
   const [view, setView] = useState("grid");
   const [sort, setSort] = useState("status");
@@ -71,7 +71,7 @@ function App() {
 
         {view === "grid" ? (
           <div className="kpi-grid">
-            {filtered.map(k => <KpiCard key={k.code} k={k} onOpen={setOpen} />)}
+            {filtered.map(k => <KpiCard key={k.code} k={k} period={period} onOpen={setOpen} />)}
           </div>
         ) : (
           <div className="kpi-list">
@@ -79,7 +79,7 @@ function App() {
               <div></div><div>รหัส</div><div>ยุทธ.</div><div>ตัวชี้วัด</div>
               <div>ผล</div><div>เป้า</div><div>ความก้าวหน้า</div><div>ช่องว่าง</div><div>แนวโน้ม</div><div></div>
             </div>
-            {filtered.map(k => <KpiRow key={k.code} k={k} onOpen={setOpen} />)}
+            {filtered.map(k => <KpiRow key={k.code} k={k} period={period} onOpen={setOpen} />)}
           </div>
         )}
 

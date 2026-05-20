@@ -21,9 +21,14 @@ function Header({ period, setPeriod }) {
       </div>
       <div className="topbar-right">
         <div className="period">
-          <button className="chip on">ปี 2569</button>
-          <button className="chip" style={{ opacity: .65 }}>vs 2568</button>
-          <button className="chip" style={{ opacity: .5 }}>vs 2567</button>
+          {["2569","2568","2567"].map((yr, i) => (
+            <button key={yr}
+              className={"chip " + (period === yr ? "on" : "")}
+              style={period !== yr ? { opacity: 1 - i * 0.15 } : {}}
+              onClick={() => setPeriod(yr)}>
+              {yr === "2569" ? "ปี 2569" : `vs ${yr}`}
+            </button>
+          ))}
         </div>
         <div className="meta">
           <div className="meta-l">ปีงบประมาณ</div>
@@ -147,11 +152,23 @@ function FilterBar({ filter, setFilter, view, setView, sort, setSort, q, setQ, c
   );
 }
 
+// เลือกค่าตามปีที่เลือก — fallback ไป k.v ถ้าปีนั้นไม่มีข้อมูล
+function getDisplayV(k, period) {
+  const map = { "2569": k.v69, "2568": k.v68, "2567": k.v67 };
+  return map[period] ?? k.v;
+}
+function getDisplayStatus(displayV, target, inv) {
+  const ratio = inv ? target / Math.max(displayV, 0.001) : displayV / target;
+  return ratio >= 0.95 ? "g" : ratio >= 0.75 ? "y" : "r";
+}
+
 // ---------- KPI CARD ----------
-function KpiCard({ k, onOpen }) {
+function KpiCard({ k, period = "2569", onOpen }) {
   const p = PILLARS.find(x => x.id === k.pillar);
-  const col = STATUS_COLORS[k.status];
-  const gap = (k.target - k.v);
+  const displayV = getDisplayV(k, period);
+  const status   = getDisplayStatus(displayV, k.target, k.inv);
+  const col = STATUS_COLORS[status];
+  const gap = (k.target - displayV);
   return (
     <button className="kpi-card" onClick={() => onOpen(k)}>
       <div className="kpi-head">
@@ -166,13 +183,13 @@ function KpiCard({ k, onOpen }) {
           </span>
         )}
         <span className="kpi-status" style={{ color: col.text, background: col.soft }}>
-          <StatusDot status={k.status} />
+          <StatusDot status={status} />
           {col.label}
         </span>
       </div>
       <div className="kpi-body">
         <div className="kpi-ring">
-          <StatusRing value={k.v} status={k.status} size={104} stroke={10} />
+          <StatusRing value={displayV} status={status} size={104} stroke={10} />
         </div>
         <div className="kpi-info">
           <div className="kpi-name">{k.name}</div>
@@ -203,31 +220,33 @@ function KpiCard({ k, onOpen }) {
 }
 
 // ---------- KPI LIST ROW ----------
-function KpiRow({ k, onOpen }) {
+function KpiRow({ k, period = "2569", onOpen }) {
   const p = PILLARS.find(x => x.id === k.pillar);
-  const col = STATUS_COLORS[k.status];
-  const gap = k.target - k.v;
+  const displayV = getDisplayV(k, period);
+  const status   = getDisplayStatus(displayV, k.target, k.inv);
+  const col = STATUS_COLORS[status];
+  const gap = k.target - displayV;
   return (
     <button className="kpi-row" onClick={() => onOpen(k)}>
-      <div className="row-status"><StatusDot status={k.status} size={10} /></div>
+      <div className="row-status"><StatusDot status={status} size={10} /></div>
       <div className="row-code">{k.code}</div>
       <div className="row-pillar" style={{ color: p.accent }}>{p.code}</div>
       <div className="row-name">
         <div className="rn-th">{k.name}</div>
         <div className="rn-en">{k.en}</div>
       </div>
-      <div className="row-value" style={{ color: col.text }}>{k.v.toFixed(1)}<span className="ru">%</span></div>
-      <div className="row-target">/ {k.target}%</div>
+      <div className="row-value" style={{ color: col.text }}>{displayV.toFixed(1)}<span className="ru">{k.unit ?? "%"}</span></div>
+      <div className="row-target">/ {k.target}{k.unit ?? "%"}</div>
       <div className="row-bar">
         <div className="row-bar-track">
-          <div className="row-bar-fill" style={{ width: `${Math.min(100, (k.v/k.target)*100)}%`, background: col.ring }} />
+          <div className="row-bar-fill" style={{ width: `${Math.min(100, (k.inv ? k.target/Math.max(displayV,0.001) : displayV/k.target)*100)}%`, background: col.ring }} />
           <div className="row-bar-target" style={{ left: "100%" }} />
         </div>
       </div>
       <div className="row-gap" style={{ color: gap > 0 ? "#C4452B" : "#1F8A5B" }}>
         {gap > 0 ? "−" : "+"}{Math.abs(gap).toFixed(1)}
       </div>
-      <div className="row-spark"><Sparkline data={k.trend} status={k.status} width={72} height={22} /></div>
+      <div className="row-spark"><Sparkline data={k.trend} status={status} width={72} height={22} /></div>
       <div className="row-chev">›</div>
     </button>
   );
