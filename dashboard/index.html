@@ -228,6 +228,15 @@
     .btn.ghost { background: transparent; border-color: var(--line); color: var(--ink-2); }
     .btn.primary { background: var(--ink); color: #FFF; border-color: var(--ink); margin-left: auto; }
 
+    .admin-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 12px; border-radius: 7px;
+      background: var(--card-2); border: 1px solid var(--line);
+      color: var(--ink-3); font-size: 12px; font-weight: 600;
+      text-decoration: none; transition: background .15s, color .15s;
+    }
+    .admin-btn:hover { background: var(--line); color: var(--ink); }
+
     /* Tweaks panel chrome override */
     .tweaks-panel { font-family: "Prompt", "Inter", sans-serif !important; }
 
